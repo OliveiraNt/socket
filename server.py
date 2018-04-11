@@ -1,45 +1,67 @@
 import socket
+
+from _thread import *
+import threading
+
+def threaded(c, addr):
+    while True:
+ 
+        # data received from client
+        data = c.recv(1024).decode()
+        if not data:
+
+                print("Terminating connection with: " + str(addr[0]) + ':' + str(addr[1]))
+                break
+        print ("from connected user " + str(addr[0]) + ':' + str(addr[1]) + " -> " + str(data))
+             
+        if "+" in str(data):
+            a = str(data).split("+")
+            data = str(int(a[0]) + int(a[1]))
+
+        elif "-" in str(data):
+            a = str(data).split("-")
+            data = str(int(a[0]) - int(a[1]))
+
+        elif "*" in str(data):
+            a = str(data).split("*")
+            data = str(int(a[0]) * int(a[1]))
+
+        elif "/" in str(data):
+            a = str(data).split("/")
+            data = str(int(a[0]) / int(a[1]))
+
+        else:
+            data = "Operation is not supported"
+
+        print ("sending: " + str(data))
+        c.send(data.encode())
+ 
+    # connection closed
+    c.close()
  
 def Main():
     host = "localhost"
-    port = 9999
+    port = 9998
      
-    mySocket = socket.socket()
+    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     mySocket.bind((host,port))
+    print("socket binded to post", port)
      
-    mySocket.listen(1)
-    conn, addr = mySocket.accept()
-    print ("Connection from: " + str(addr))
+    mySocket.listen(5)
+    print("socket is listening")
+
     while True:
-            data = conn.recv(1024).decode()
-            if not data:
-                    break
-            print ("from connected  user: " + str(data))
-             
-            if "+" in str(data):
-                a = str(data).split("+")
-                data = str(int(a[0]) + int(a[1]))
 
-            elif "-" in str(data):
-                a = str(data).split("-")
-                data = str(int(a[0]) - int(a[1]))
+            conn, addr = mySocket.accept()
 
-            elif "*" in str(data):
-                a = str(data).split("*")
-                data = str(int(a[0]) * int(a[1]))
+            print('Connected to :', addr[0], ':', addr[1])
 
-            elif "/" in str(data):
-                a = str(data).split("/")
-                data = str(int(a[0]) / int(a[1]))
+            start_new_thread(threaded, (conn, addr,))
 
-            else:
-                data = "Operation is not supported"
+            
 
-            print ("sending: " + str(data))
-            conn.send(data.encode())
-
-    print ("Terminating connection with: " + str(addr))         
-    conn.close()
+    print ("Closing socket")         
+    mySocket.close()
      
 if __name__ == '__main__':
     Main()
